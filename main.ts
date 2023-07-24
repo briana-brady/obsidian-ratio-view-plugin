@@ -1,5 +1,5 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-
+import { RatioText } from "./ratio";
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
@@ -10,16 +10,16 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
+export default class MyBeautifulPlugin extends Plugin {
 	settings: MyPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
-
+		console.log("plugin loaded");
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+			new Notice('Alright alright, you clicked me.');
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
@@ -76,10 +76,31 @@ export default class MyPlugin extends Plugin {
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
+
+		this.registerMarkdownPostProcessor((element, context) => {
+			const codeblocks = element.querySelectorAll("code");
+			console.dir(element);
+			for (let i = 0; i < codeblocks.length; i++) {
+
+			  const codeblockElement = codeblocks.item(i);
+
+			  const text = codeblockElement.innerText.trim();
+			  
+	  
+			  if (this.isAnIngredientListing(text)) {
+				context.addChild(new RatioText(codeblockElement, text));
+			  }
+			}
+		  });
+		}
+	
 
 	onunload() {
+		console.log("plugin unloaded");
+	}
 
+	isAnIngredientListing(text: string): boolean {
+		return text[0] === ":" && text[text.length - 1] === ":";
 	}
 
 	async loadSettings() {
@@ -108,9 +129,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: MyBeautifulPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: MyBeautifulPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
