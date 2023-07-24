@@ -1,5 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { RatioText } from "./ratio";
+import { RATIO_VIEW_TYPE, RatioView } from 'view';
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
@@ -65,38 +66,66 @@ export default class MyBeautifulPlugin extends Plugin {
 			}
 		});
 
+
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
+		//callback function returns a new instance of your view
+		//takes a leaf as a parameter
+		//callback might be called multiple times
+		this.registerView(RATIO_VIEW_TYPE, (leaf) => new RatioView(leaf));
+		
+		
+		const ratioIcon = this.addRibbonIcon('percent', 'Ratio View', (evt: MouseEvent) => {
+			// Called when the user clicks the icon.
+			this.openView();
+		});
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
+		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+		// 	console.log('click', evt);
+		// });
 
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		
+		// this.registerMarkdownPostProcessor((element, context) => {
+			
+		// 	const innerElements = element.querySelectorAll("p");
+			
+		// 	for (let i = 0; i < innerElements.length; i++) {
 
-		this.registerMarkdownPostProcessor((element, context) => {
-			const codeblocks = element.querySelectorAll("code");
-			console.dir(element);
-			for (let i = 0; i < codeblocks.length; i++) {
+		// 	  const codeblockElement = innerElements.item(i);
 
-			  const codeblockElement = codeblocks.item(i);
-
-			  const text = codeblockElement.innerText.trim();
+		// 	  const text = codeblockElement.innerText.trim();
 			  
 	  
-			  if (this.isAnIngredientListing(text)) {
-				context.addChild(new RatioText(codeblockElement, text));
-			  }
-			}
-		  });
+		// 	  if (this.isAnIngredientListing(text)) {
+		// 		context.addChild(new RatioText(codeblockElement, text));
+		// 	  }
+		// 	}
+		//   });
 		}
-	
 
+	//create a leaf that will hold our view
+	openView(){
+
+		//remove present leaf instancess of my type
+		this.app.workspace.detachLeavesOfType(RATIO_VIEW_TYPE);
+
+		//creates a new leaf for you, not getting one, false on splitting
+		const leaf = this.app.workspace.getRightLeaf(false);
+		
+		leaf.setViewState({
+			type: RATIO_VIEW_TYPE,
+		});
+
+		//we're going to keep adding views
+		this.app.workspace.revealLeaf(leaf);
+
+	}
 	onunload() {
 		console.log("plugin unloaded");
+		this.app.workspace.detachLeavesOfType(RATIO_VIEW_TYPE);
 	}
 
 	isAnIngredientListing(text: string): boolean {
@@ -110,7 +139,10 @@ export default class MyBeautifulPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
+
 }
+
 
 class SampleModal extends Modal {
 	constructor(app: App) {
