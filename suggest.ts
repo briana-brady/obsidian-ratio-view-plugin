@@ -37,7 +37,8 @@ export class RatioSuggest extends FuzzySuggestModal<TFile> {
 
     //what happens when selected
     onChooseItem(item: TFile, evt: MouseEvent | KeyboardEvent): void {
-        new Notice(`Selected ${item.basename}`);
+        //adds to a TFile; .modify completely replaces the content of a note
+        this.app.vault.append(item, "\n #recipe");
         return;
     }
 
