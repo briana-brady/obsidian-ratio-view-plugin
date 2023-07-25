@@ -1,6 +1,7 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { RatioText } from "./ratio";
 import { RATIO_VIEW_TYPE, RatioView } from 'view';
+import { RatioSuggest } from 'suggest';
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
@@ -77,9 +78,15 @@ export default class MyBeautifulPlugin extends Plugin {
 		this.registerView(RATIO_VIEW_TYPE, (leaf) => new RatioView(leaf));
 		
 		
-		const ratioIcon = this.addRibbonIcon('percent', 'Ratio View', (evt: MouseEvent) => {
+		this.addRibbonIcon('percent', 'Ratio View', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			this.openView();
+		});
+
+		this.addRibbonIcon('calculator', 'Add Ratio to File', (evt: MouseEvent) => {
+			// Called when the user clicks the icon.
+			//need to open the modal
+			new RatioSuggest(this.app).open();
 		});
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -104,7 +111,7 @@ export default class MyBeautifulPlugin extends Plugin {
 		// 	  }
 		// 	}
 		//   });
-		}
+	}
 
 	//create a leaf that will hold our view
 	openView(){
