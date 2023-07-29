@@ -41,24 +41,27 @@ export class RatioView extends ItemView {
             const cache = this.app.metadataCache.getFileCache(currentFile);
             cache?.headings?.find(
                 (headingCache) => {
-                    console.log(headingCache);
                     if (this.isIngredientHeading(headingCache.heading)) {
                         isRecipe = true;
                         heading = headingCache;
                     }
-                    console.log(`isRecipe ${isRecipe}`);
                 });
 
             console.log(cache);
             console.log(`isRecipe ${isRecipe}`);
             if (!isRecipe) {
-                contentEl.createSpan('No Ingredient List found... :(');
+                contentEl.createEl('p', { text: 'No Ingredient List found... :('});
             }
             else {
                 let text = await app.vault.cachedRead(currentFile);
                 console.log(`This is the text of the file ${text})`);
-                let splitAtHeaderRegex = /^#+ [^#]*(?:#(?!#)[^#]*)*/gm;
-                console.log(text.match(splitAtHeaderRegex));
+
+                let textSplitByHeaders = this.splitTextByHeaders(text);
+                
+
+                let ingredientText = this.getTextOfIngredients(textSplitByHeaders);
+
+
                 let div = contentEl.createDiv();
                 MarkdownRenderer.renderMarkdown(text, div, currentFile.path, this);
             }
@@ -71,8 +74,54 @@ export class RatioView extends ItemView {
         //HTMLElement is not aware of state, any logic changes made outside of it
         //need to be reloaded through the render() method.
     }
-
+    
     isIngredientHeading(heading: string): boolean {
         return heading.contains("Ingredients");
     }
+
+    splitTextByHeaders(text: string) : RegExpMatchArray {
+        let splitAtHeaderRegex = /^#+ [^#]*(?:#(?!#)[^#]*)*/gm;
+        return text.match(splitAtHeaderRegex) || [''];
+    }
+
+    getFirstLineOf(text: string): string {
+        return text.trim().split('\n')[0];
+    }
+
+    getIngredientsChunkIndex(textChunks: RegExpMatchArray): number {
+        for (let index = 0; index < textChunks.length; index++) {
+            let chunk = textChunks[index];
+            let firstLine = this.getFirstLineOf(chunk);
+            if (this.isIngredientHeading(firstLine)) {
+                return index;
+            }
+        }
+        return -Infinity;
+    }
+
+    getLevelOfText(text: string) {
+        let firstLine = this.getFirstLineOf(text);
+        let levelofText = firstLine ? firstLine.split(" ").length : 1;
+        return levelofText;
+    }
+
+    getTextUnderneathLevel(textChunks: Array<string>, level: Number): string {
+        //get chunks while we haven't come across the level yet, excluding the first instance of level
+        //keep track of first instance of level, only increase if the current level is less than our desired level
+        
+        
+        return "";
+    }
+
+    getTextOfIngredients(textSplitByHeaders: RegExpMatchArray): string {
+        
+        let ingredientChunkIndex = this.getIngredientsChunkIndex(textSplitByHeaders);
+
+        let remainingText = textSplitByHeaders.slice(ingredientChunkIndex);
+
+        let ingredientLevel = this.getLevelOfText(textSplitByHeaders[ingredientChunkIndex]);
+
+        return this.getTextUnderneathLevel( remainingText, ingredientLevel);
+    }
+
 }
