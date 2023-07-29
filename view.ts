@@ -1,4 +1,4 @@
-import { ItemView, MarkdownRenderer, MarkdownView, Setting, WorkspaceLeaf } from "obsidian";
+import { HeadingCache, ItemView, MarkdownRenderer, MarkdownView, Setting, WorkspaceLeaf } from "obsidian";
 
 export const RATIO_VIEW_TYPE = "ratio-view";
 
@@ -35,13 +35,17 @@ export class RatioView extends ItemView {
         let currentFile = this.app.workspace.getActiveFile();
         console.log(currentFile);
         let isRecipe = false;
+        let heading: HeadingCache;
         if (currentFile) {
 
             const cache = this.app.metadataCache.getFileCache(currentFile);
             cache?.headings?.find(
                 (headingCache) => {
                     console.log(headingCache);
-                    if(this.isIngredientHeading(headingCache.heading)) isRecipe = true;
+                    if (this.isIngredientHeading(headingCache.heading)) {
+                        isRecipe = true;
+                        heading = headingCache;
+                    }
                     console.log(`isRecipe ${isRecipe}`);
                 });
 
@@ -53,6 +57,8 @@ export class RatioView extends ItemView {
             else {
                 let text = await app.vault.cachedRead(currentFile);
                 console.log(`This is the text of the file ${text})`);
+                let splitAtHeaderRegex = /^#+ [^#]*(?:#(?!#)[^#]*)*/gm;
+                console.log(text.match(splitAtHeaderRegex));
                 let div = contentEl.createDiv();
                 MarkdownRenderer.renderMarkdown(text, div, currentFile.path, this);
             }
