@@ -50,20 +50,20 @@ export class RatioView extends ItemView {
             console.log(cache);
             console.log(`isRecipe ${isRecipe}`);
             if (!isRecipe) {
-                contentEl.createEl('p', { text: 'No Ingredient List found... :('});
+                contentEl.createEl('p', { text: 'No Ingredient List found... :(' });
             }
             else {
                 let text = await app.vault.cachedRead(currentFile);
                 console.log(`This is the text of the file ${text})`);
 
                 let textSplitByHeaders = this.splitTextByHeaders(text);
-                
+
 
                 let ingredientText = this.getTextOfIngredients(textSplitByHeaders);
 
 
                 let div = contentEl.createDiv();
-                MarkdownRenderer.renderMarkdown(text, div, currentFile.path, this);
+                MarkdownRenderer.renderMarkdown(ingredientText, div, currentFile.path, this);
             }
         }
 
@@ -74,12 +74,12 @@ export class RatioView extends ItemView {
         //HTMLElement is not aware of state, any logic changes made outside of it
         //need to be reloaded through the render() method.
     }
-    
+
     isIngredientHeading(heading: string): boolean {
         return heading.contains("Ingredients");
     }
 
-    splitTextByHeaders(text: string) : RegExpMatchArray {
+    splitTextByHeaders(text: string): RegExpMatchArray {
         let splitAtHeaderRegex = /^#+ [^#]*(?:#(?!#)[^#]*)*/gm;
         return text.match(splitAtHeaderRegex) || [''];
     }
@@ -105,23 +105,43 @@ export class RatioView extends ItemView {
         return levelofText;
     }
 
-    getTextUnderneathLevel(textChunks: Array<string>, level: Number): string {
+
+    getChunksUnderneathLevel(textChunks: Array<string>, level : number) : Array<string>{
+        let chunksUnderneathLevel = [];
+        let counter = 0;
+        for (let index = 0; (counter < 1 && index < textChunks.length); index++) {
+            let chunk = textChunks[index];
+            if (this.getLevelOfText(chunk) <= level) {
+                counter++;
+                chunksUnderneathLevel.push(chunk);
+            }
+        }
+        console.log(`chunks found ${chunksUnderneathLevel}`);
+        return chunksUnderneathLevel;
+    }
+
+    getTextUnderneathLevel(textChunks: Array<string>, level: number): string {
         //get chunks while we haven't come across the level yet, excluding the first instance of level
         //keep track of first instance of level, only increase if the current level is less than our desired level
-        
-        
-        return "";
+       
+        let textUnderneathLevel = '';
+        let chunksUnderneathLevel = this.getChunksUnderneathLevel(textChunks, level);
+        chunksUnderneathLevel.forEach((chunk) => {
+            textUnderneathLevel += chunk;
+        });
+       
+        return textUnderneathLevel;
     }
 
     getTextOfIngredients(textSplitByHeaders: RegExpMatchArray): string {
-        
+
         let ingredientChunkIndex = this.getIngredientsChunkIndex(textSplitByHeaders);
 
         let remainingText = textSplitByHeaders.slice(ingredientChunkIndex);
 
         let ingredientLevel = this.getLevelOfText(textSplitByHeaders[ingredientChunkIndex]);
 
-        return this.getTextUnderneathLevel( remainingText, ingredientLevel);
+        return this.getTextUnderneathLevel(remainingText, ingredientLevel);
     }
 
 }
