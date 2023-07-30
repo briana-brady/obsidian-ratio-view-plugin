@@ -4,16 +4,16 @@ import { RATIO_VIEW_TYPE, RatioView } from 'view';
 import { RatioSuggest } from 'suggest';
 // Remember to rename these classes and interfaces!
 
-interface MyPluginSettings {
-	mySetting: string;
+interface RatioViewSettings {
+	baseAmountIdentifier: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: RatioViewSettings = {
+	baseAmountIdentifier: 'flour'
 }
 
-export default class MyBeautifulPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class RatioViewPlugin extends Plugin {
+	settings: RatioViewSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -70,12 +70,12 @@ export default class MyBeautifulPlugin extends Plugin {
 
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new RatioViewSettingTab(this.app, this));
 
 		//callback function returns a new instance of your view
 		//takes a leaf as a parameter
 		//callback might be called multiple times
-		this.registerView(RATIO_VIEW_TYPE, (leaf) => new RatioView(leaf));
+		this.registerView(RATIO_VIEW_TYPE, (leaf) => new RatioView(leaf, this));
 		
 		
 		this.addRibbonIcon('percent', 'Ratio View', (evt: MouseEvent) => {
@@ -83,11 +83,11 @@ export default class MyBeautifulPlugin extends Plugin {
 			this.openView();
 		});
 
-		this.addRibbonIcon('calculator', 'Add Ratio to File', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			//need to open the modal
-			new RatioSuggest(this.app).open();
-		});
+		// this.addRibbonIcon('calculator', 'Add Ratio to File', (evt: MouseEvent) => {
+		// 	// Called when the user clicks the icon.
+		// 	//need to open the modal
+		// 	new RatioSuggest(this.app).open();
+		// });
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
@@ -140,6 +140,7 @@ export default class MyBeautifulPlugin extends Plugin {
 	}
 
 	async loadSettings() {
+		//load data is data in data.json, if no data.json just DEFAULT_SETTINGS
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
@@ -167,10 +168,10 @@ class SampleModal extends Modal {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyBeautifulPlugin;
+class RatioViewSettingTab extends PluginSettingTab {
+	plugin: RatioViewPlugin;
 
-	constructor(app: App, plugin: MyBeautifulPlugin) {
+	constructor(app: App, plugin: RatioViewPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -183,14 +184,13 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Base Amount Identifier')
+			.setDesc('What will identify a line containing the base amount for the recipe? Default is "flour" but it can be any character or word.')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.baseAmountIdentifier)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					console.log('Base Amount Identifier ' + value);
+					this.plugin.settings.baseAmountIdentifier = value;
 					await this.plugin.saveSettings();
 				}));
 	}

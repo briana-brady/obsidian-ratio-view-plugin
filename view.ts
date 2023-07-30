@@ -1,11 +1,15 @@
-import { HeadingCache, ItemView, MarkdownRenderer, MarkdownView, Setting, WorkspaceLeaf } from "obsidian";
+import RatioViewPlugin from "main";
+import { HeadingCache, ItemView, MarkdownRenderer, MarkdownView, Setting, WorkspaceLeaf, } from "obsidian";
+import { RatioText } from "ratio";
 
 export const RATIO_VIEW_TYPE = "ratio-view";
+const GRAMS_REGEX = /\d+(?= *grams| *g )/;
 
 export class RatioView extends ItemView {
-
-    constructor(leaf: WorkspaceLeaf) {
+    plugin: RatioViewPlugin;
+    constructor(leaf: WorkspaceLeaf, plugin : RatioViewPlugin) {
         super(leaf);
+        this.plugin = plugin;
     }
     //an id for how to uniquely identify your view
     getViewType(): string {
@@ -61,9 +65,10 @@ export class RatioView extends ItemView {
 
                 let ingredientText = this.getTextOfIngredients(textSplitByHeaders);
 
-
+                let ingredientsTextWithRatios = this.getTextWithRatiosOfIngredients(ingredientText);
+                console.log(`ingredientstextWithRatios ${ingredientsTextWithRatios}`);
                 let div = contentEl.createDiv();
-                MarkdownRenderer.renderMarkdown(ingredientText, div, currentFile.path, this);
+                MarkdownRenderer.renderMarkdown(ingredientsTextWithRatios, div, currentFile.path, this);
             }
         }
 
@@ -101,35 +106,42 @@ export class RatioView extends ItemView {
 
     getLevelOfText(text: string) {
         let firstLine = this.getFirstLineOf(text);
-        let levelofText = firstLine ? firstLine.split(" ").length : 1;
+        let levelofText = firstLine ? firstLine.split(/\s/)[0].length : 1;
+
         return levelofText;
     }
 
 
-    getChunksUnderneathLevel(textChunks: Array<string>, level : number) : Array<string>{
+    getChunksUnderneathLevel(textChunks: Array<string>, level: number): Array<string> {
         let chunksUnderneathLevel = [];
         let counter = 0;
-        for (let index = 0; (counter < 1 && index < textChunks.length); index++) {
+        for (let index = 0; index < textChunks.length; index++) {
+            
             let chunk = textChunks[index];
-            if (this.getLevelOfText(chunk) <= level) {
-                counter++;
+            let levelOfChunk = this.getLevelOfText(chunk);
+            if ( levelOfChunk > level) {
                 chunksUnderneathLevel.push(chunk);
+            }else if(levelOfChunk == level && counter < 1){
+                chunksUnderneathLevel.push(chunk);
+                counter++;
+            }else {
+                counter++;
             }
         }
-        console.log(`chunks found ${chunksUnderneathLevel}`);
         return chunksUnderneathLevel;
     }
 
     getTextUnderneathLevel(textChunks: Array<string>, level: number): string {
         //get chunks while we haven't come across the level yet, excluding the first instance of level
         //keep track of first instance of level, only increase if the current level is less than our desired level
-       
+
         let textUnderneathLevel = '';
         let chunksUnderneathLevel = this.getChunksUnderneathLevel(textChunks, level);
+       
         chunksUnderneathLevel.forEach((chunk) => {
             textUnderneathLevel += chunk;
         });
-       
+
         return textUnderneathLevel;
     }
 
@@ -138,10 +150,77 @@ export class RatioView extends ItemView {
         let ingredientChunkIndex = this.getIngredientsChunkIndex(textSplitByHeaders);
 
         let remainingText = textSplitByHeaders.slice(ingredientChunkIndex);
+        
 
         let ingredientLevel = this.getLevelOfText(textSplitByHeaders[ingredientChunkIndex]);
 
         return this.getTextUnderneathLevel(remainingText, ingredientLevel);
     }
+
+
+
+
+    getIndividualLines(text: string): Array<string> {
+        let newlineRegex = /\r?\n/;
+        return text.split(newlineRegex);
+    }
+
+    getGramAmountOfLine(line: string): number {
+        let firstGramAmount = line.match(GRAMS_REGEX);
+        return Number(firstGramAmount) || 0;
+
+    }
+
+    isBaseIngredient(ingredient: string): boolean {
+        var replace = this.plugin.settings.baseAmountIdentifier;
+        let baseAmountRegex =  new RegExp(replace, "g");
+        let isBase = baseAmountRegex.test(ingredient);
+        return isBase;
+    }
+
+    getBaseAmountForIngredients(ingredients: Array<string>): number {
+        let baseAmount = 0;
+        ingredients.forEach((ingredient) => {
+            let gramAmount = this.getGramAmountOfLine(ingredient);
+            if (gramAmount && this.isBaseIngredient(ingredient)) {
+                baseAmount = gramAmount;
+            }
+        });
+        return baseAmount;
+    }
+
+    roundToHundredths(amount: number): number{
+        return Number(amount.toFixed(2));
+    }
+
+    getRatioAmountOfLine(line: string, baseAmountInGrams: number): number {
+        let gramAmountOfLine = this.getGramAmountOfLine(line);
+        if (gramAmountOfLine && baseAmountInGrams) {
+            let ratioAmount = gramAmountOfLine / baseAmountInGrams * 100;
+            return this.roundToHundredths(ratioAmount);
+        }
+
+        return 0;
+    }
+
+
+
+    getTextWithRatiosOfIngredients(ingredientText: string): string {
+        let individualLines = this.getIndividualLines(ingredientText);
+        let baseAmount = this.getBaseAmountForIngredients(individualLines);
+        let textWithRatios = individualLines.map((line) => {
+            console.log(line);
+            let ratioAmount = this.getRatioAmountOfLine(line, baseAmount);
+            console.log(ratioAmount);
+            let ratioText = '';
+            if(ratioAmount){
+                ratioText = ratioText.concat(' | ',  ratioAmount.toString() ,'%');
+            }
+            return line.concat(ratioText);
+        }).join('\n');
+        console.log(textWithRatios);
+        return textWithRatios;
+    }
+
 
 }
