@@ -189,15 +189,15 @@ export class RatioView extends ItemView {
         return baseAmount;
     }
 
-    roundToHundredths(amount: number): number{
-        return Number(amount.toFixed(2));
+    roundToPlace(amount: number, place: number): number{
+        return Number(amount.toFixed(place));
     }
 
     getRatioAmountOfLine(line: string, baseAmountInGrams: number): number {
         let gramAmountOfLine = this.getGramAmountOfLine(line);
         if (gramAmountOfLine && baseAmountInGrams) {
             let ratioAmount = gramAmountOfLine / baseAmountInGrams * 100;
-            return this.roundToHundredths(ratioAmount);
+            return this.roundToPlace(ratioAmount, 1);
         }
 
         return 0;
@@ -209,16 +209,16 @@ export class RatioView extends ItemView {
         let individualLines = this.getIndividualLines(ingredientText);
         let baseAmount = this.getBaseAmountForIngredients(individualLines);
         let textWithRatios = individualLines.map((line) => {
-            console.log(line);
+
             let ratioAmount = this.getRatioAmountOfLine(line, baseAmount);
-            console.log(ratioAmount);
+
             let ratioText = '';
             if(ratioAmount){
                 ratioText = ratioText.concat(' | ',  ratioAmount.toString() ,'%');
             }
             return line.concat(ratioText);
         }).join('\n');
-        console.log(textWithRatios);
+
         return textWithRatios;
     }
 
