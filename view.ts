@@ -7,7 +7,7 @@ const GRAMS_REGEX = /\d+(?= *grams| *g )/;
 
 export class RatioView extends ItemView {
     plugin: RatioViewPlugin;
-    constructor(leaf: WorkspaceLeaf, plugin : RatioViewPlugin) {
+    constructor(leaf: WorkspaceLeaf, plugin: RatioViewPlugin) {
         super(leaf);
         this.plugin = plugin;
     }
@@ -116,15 +116,15 @@ export class RatioView extends ItemView {
         let chunksUnderneathLevel = [];
         let counter = 0;
         for (let index = 0; index < textChunks.length; index++) {
-            
+
             let chunk = textChunks[index];
             let levelOfChunk = this.getLevelOfText(chunk);
-            if ( levelOfChunk > level) {
+            if (levelOfChunk > level) {
                 chunksUnderneathLevel.push(chunk);
-            }else if(levelOfChunk == level && counter < 1){
+            } else if (levelOfChunk == level && counter < 1) {
                 chunksUnderneathLevel.push(chunk);
                 counter++;
-            }else {
+            } else {
                 counter++;
             }
         }
@@ -137,7 +137,7 @@ export class RatioView extends ItemView {
 
         let textUnderneathLevel = '';
         let chunksUnderneathLevel = this.getChunksUnderneathLevel(textChunks, level);
-       
+
         chunksUnderneathLevel.forEach((chunk) => {
             textUnderneathLevel += chunk;
         });
@@ -150,7 +150,7 @@ export class RatioView extends ItemView {
         let ingredientChunkIndex = this.getIngredientsChunkIndex(textSplitByHeaders);
 
         let remainingText = textSplitByHeaders.slice(ingredientChunkIndex);
-        
+
 
         let ingredientLevel = this.getLevelOfText(textSplitByHeaders[ingredientChunkIndex]);
 
@@ -165,15 +165,70 @@ export class RatioView extends ItemView {
         return text.split(newlineRegex);
     }
 
+
+    getKnownIngredientInLine(line: string): string {
+        let ingredientWeightsKnown = this.plugin.settings.ingredientsToGrams;
+        let ingredientsKnown = Object.keys(ingredientWeightsKnown);
+        console.log(`ingredientsKnown ${ingredientsKnown}`);
+        let knownIngredient = ''
+        ingredientsKnown.forEach((key) => {
+            if (line.contains(key)) {
+                console.log(key + 'found');
+                knownIngredient =  key;
+            }
+        })
+        return knownIngredient;
+    }
+
+    getAmountOfKnownIngredient(line: string, knownIngredient: string): number {
+        console.log('getAmountOfKnownIngredient called');
+        let specialAmountRegex = new RegExp(/\d+/);
+        let specialAmountInString = line.match(specialAmountRegex);
+        
+        console.log(`amount of ${knownIngredient} in string ${specialAmountInString}`);
+        let amountOfKnownIngredient = Number(specialAmountInString);
+        return amountOfKnownIngredient;
+    }
+
+    calculateWeightOfIngredient(knownIngredient: string, amountOfKnownIngredient: number): number {
+        let weightOfKnownIngredient = this.plugin.settings.ingredientsToGrams[knownIngredient];
+        if(weightOfKnownIngredient){
+            let weight = amountOfKnownIngredient * weightOfKnownIngredient;
+            console.log(`weight ${weight}`);
+            return weight;
+        }
+        return 0;
+    }
+
+    getWeightPerIngredient(line: string): number {
+        let knownIngredient: string = this.getKnownIngredientInLine(line);
+        if (knownIngredient) {
+            let amountOfKnownIngredient: number = this.getAmountOfKnownIngredient(line, knownIngredient);
+            let weightPerIngredient: number = this.calculateWeightOfIngredient(knownIngredient, amountOfKnownIngredient);
+            return weightPerIngredient;
+        }
+
+        return 0;
+    }
+
+
+
+
     getGramAmountOfLine(line: string): number {
-        let firstGramAmount = line.match(GRAMS_REGEX);
-        return Number(firstGramAmount) || 0;
+        let firstGramAmountInString = line.match(GRAMS_REGEX);
+        let gramAmount = Number(firstGramAmountInString);
+        if (!gramAmount) {
+            let gramsOfSpecialIngredient = this.getWeightPerIngredient(line);
+            gramAmount = gramsOfSpecialIngredient;
+        }
+        return gramAmount || 0;
 
     }
 
+
     isBaseIngredient(ingredient: string): boolean {
-        var replace = this.plugin.settings.baseAmountIdentifier;
-        let baseAmountRegex =  new RegExp(replace, "g");
+        var identifier = this.plugin.settings.baseAmountIdentifier;
+        let baseAmountRegex = new RegExp(identifier, "g");
         let isBase = baseAmountRegex.test(ingredient);
         return isBase;
     }
@@ -189,12 +244,13 @@ export class RatioView extends ItemView {
         return baseAmount;
     }
 
-    roundToPlace(amount: number, place: number): number{
+    roundToPlace(amount: number, place: number): number {
         return Number(amount.toFixed(place));
     }
 
     getRatioAmountOfLine(line: string, baseAmountInGrams: number): number {
         let gramAmountOfLine = this.getGramAmountOfLine(line);
+
         if (gramAmountOfLine && baseAmountInGrams) {
             let ratioAmount = gramAmountOfLine / baseAmountInGrams * 100;
             return this.roundToPlace(ratioAmount, 1);
@@ -203,24 +259,27 @@ export class RatioView extends ItemView {
         return 0;
     }
 
-
+    formatTextWithRatio(ratioAmount: number) {
+        let ratioText = '';
+        if (ratioAmount) {
+            ratioText = ratioText.concat(' | ', ratioAmount.toString(), '%');
+        }
+        return ratioText;
+    }
 
     getTextWithRatiosOfIngredients(ingredientText: string): string {
         let individualLines = this.getIndividualLines(ingredientText);
         let baseAmount = this.getBaseAmountForIngredients(individualLines);
+
         let textWithRatios = individualLines.map((line) => {
-
             let ratioAmount = this.getRatioAmountOfLine(line, baseAmount);
-
-            let ratioText = '';
-            if(ratioAmount){
-                ratioText = ratioText.concat(' | ',  ratioAmount.toString() ,'%');
-            }
+            let ratioText = this.formatTextWithRatio(ratioAmount);
             return line.concat(ratioText);
         }).join('\n');
 
         return textWithRatios;
     }
+
 
 
 }

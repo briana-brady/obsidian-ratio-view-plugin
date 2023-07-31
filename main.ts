@@ -5,12 +5,18 @@ import { RatioSuggest } from 'suggest';
 // Remember to rename these classes and interfaces!
 
 interface RatioViewSettings {
-	baseAmountIdentifier: string;
+	baseAmountIdentifier: string,
+	ingredientsToGrams : {[key: string]: number },
 }
 
 const DEFAULT_SETTINGS: RatioViewSettings = {
-	baseAmountIdentifier: 'flour'
+	baseAmountIdentifier: 'flour',
+	ingredientsToGrams : {
+		'egg' : 50,
+	}
 }
+
+
 
 export default class RatioViewPlugin extends Plugin {
 	settings: RatioViewSettings;
@@ -76,8 +82,8 @@ export default class RatioViewPlugin extends Plugin {
 		//takes a leaf as a parameter
 		//callback might be called multiple times
 		this.registerView(RATIO_VIEW_TYPE, (leaf) => new RatioView(leaf, this));
-		
-		
+
+
 		this.addRibbonIcon('percent', 'Ratio View', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			this.openView();
@@ -94,18 +100,18 @@ export default class RatioViewPlugin extends Plugin {
 		// 	console.log('click', evt);
 		// });
 
-		
+
 		// this.registerMarkdownPostProcessor((element, context) => {
-			
+
 		// 	const innerElements = element.querySelectorAll("p");
-			
+
 		// 	for (let i = 0; i < innerElements.length; i++) {
 
 		// 	  const codeblockElement = innerElements.item(i);
 
 		// 	  const text = codeblockElement.innerText.trim();
-			  
-	  
+
+
 		// 	  if (this.isAnIngredientListing(text)) {
 		// 		context.addChild(new RatioText(codeblockElement, text));
 		// 	  }
@@ -114,14 +120,14 @@ export default class RatioViewPlugin extends Plugin {
 	}
 
 	//create a leaf that will hold our view
-	openView(){
+	openView() {
 
 		//remove present leaf instancess of my type
 		this.app.workspace.detachLeavesOfType(RATIO_VIEW_TYPE);
 
 		//creates a new leaf for you, not getting one, false on splitting
 		const leaf = this.app.workspace.getRightLeaf(false);
-		
+
 		leaf.setViewState({
 			type: RATIO_VIEW_TYPE,
 		});
@@ -158,12 +164,12 @@ class SampleModal extends Modal {
 	}
 
 	onOpen() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.setText('Woah!');
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
@@ -177,11 +183,11 @@ class RatioViewSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', { text: 'Settings for my awesome plugin.' });
 
 		new Setting(containerEl)
 			.setName('Base Amount Identifier')
@@ -193,5 +199,18 @@ class RatioViewSettingTab extends PluginSettingTab {
 					this.plugin.settings.baseAmountIdentifier = value;
 					await this.plugin.saveSettings();
 				}));
+		new Setting(containerEl)
+			.setName("Add metric weight for an ingredient")
+			.addText(text => text
+				.setValue(JSON.stringify(this.plugin.settings.ingredientsToGrams))
+				.onChange(async (value) => {
+					try{
+						this.plugin.settings.ingredientsToGrams = JSON.parse(value);
+					}catch(e){
+
+					}
+					await this.plugin.saveSettings();
+				}));
+			
 	}
 }
