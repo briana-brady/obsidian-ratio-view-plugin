@@ -259,7 +259,7 @@ export class RatioView extends ItemView {
     formatTextWithRatio(ratioAmount: number) {
         let ratioText = '';
         if (ratioAmount) {
-            ratioText = ratioText.concat(' | ', ratioAmount.toString(), '%');
+            ratioText = ratioText.concat(' ', ratioAmount.toString(), '%');
         }
         return ratioText;
     }
