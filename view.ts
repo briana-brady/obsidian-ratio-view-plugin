@@ -1,6 +1,5 @@
 import RatioViewPlugin from "main";
 import { HeadingCache, ItemView, MarkdownRenderer, MarkdownView, Setting, WorkspaceLeaf, } from "obsidian";
-import { RatioText } from "ratio";
 
 export const RATIO_VIEW_TYPE = "ratio-view";
 const GRAMS_REGEX = /\d+(?= *grams| *g[^a-zA-Z]*)/;
