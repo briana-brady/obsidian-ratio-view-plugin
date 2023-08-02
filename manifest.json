@@ -1,11 +1,11 @@
 {
-	"id": "my-beautiful-plugin",
-	"name": "My Beautiful Plugin",
+	"id": "ratio-view-plugin",
+	"name": "Ratio View",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "This plugin shows baker's percentages for a file with ingredients in grams, given an ingredient to treat as a base",
+	"author": "Briana Brady",
+	"authorUrl": "",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }

@@ -51,14 +51,12 @@ export class RatioView extends ItemView {
                     }
                 });
 
-            console.log(cache);
             console.log(`isRecipe ${isRecipe}`);
             if (!isRecipe) {
                 contentEl.createEl('p', { text: 'No Ingredient List found... :(' });
             }
             else {
                 let text = await app.vault.cachedRead(currentFile);
-                console.log(`This is the text of the file ${text})`);
 
                 let textSplitByHeaders = this.splitTextByHeaders(text);
 
@@ -66,7 +64,7 @@ export class RatioView extends ItemView {
                 let ingredientText = this.getTextOfIngredients(textSplitByHeaders);
 
                 let ingredientsTextWithRatios = this.getTextWithRatiosOfIngredients(ingredientText);
-                console.log(`ingredientstextWithRatios ${ingredientsTextWithRatios}`);
+                navigator.clipboard.writeText(ingredientsTextWithRatios);
                 let div = contentEl.createDiv();
                 MarkdownRenderer.renderMarkdown(ingredientsTextWithRatios, div, currentFile.path, this);
             }
@@ -169,11 +167,9 @@ export class RatioView extends ItemView {
     getKnownIngredientInLine(line: string): string {
         let ingredientWeightsKnown = this.plugin.settings.ingredientsToGrams;
         let ingredientsKnown = Object.keys(ingredientWeightsKnown);
-        console.log(`ingredientsKnown ${ingredientsKnown}`);
         let knownIngredient = ''
         ingredientsKnown.forEach((key) => {
             if (line.contains(key)) {
-                console.log(key + 'found');
                 knownIngredient =  key;
             }
         })
@@ -181,11 +177,11 @@ export class RatioView extends ItemView {
     }
 
     getAmountOfKnownIngredient(line: string, knownIngredient: string): number {
-        console.log('getAmountOfKnownIngredient called');
+
         let specialAmountRegex = new RegExp(/\d+/);
         let specialAmountInString = line.match(specialAmountRegex);
         
-        console.log(`amount of ${knownIngredient} in string ${specialAmountInString}`);
+
         let amountOfKnownIngredient = Number(specialAmountInString);
         return amountOfKnownIngredient;
     }
@@ -194,7 +190,7 @@ export class RatioView extends ItemView {
         let weightOfKnownIngredient = this.plugin.settings.ingredientsToGrams[knownIngredient];
         if(weightOfKnownIngredient){
             let weight = amountOfKnownIngredient * weightOfKnownIngredient;
-            console.log(`weight ${weight}`);
+
             return weight;
         }
         return 0;
@@ -215,7 +211,8 @@ export class RatioView extends ItemView {
 
 
     getGramAmountOfLine(line: string): number {
-        let firstGramAmountInString = line.match(GRAMS_REGEX);
+        let cleanedLine = line.replace(/[^a-zA-Z0-9 ]/g, '');
+        let firstGramAmountInString = cleanedLine.match(GRAMS_REGEX);
         let gramAmount = Number(firstGramAmountInString);
         if (!gramAmount) {
             let gramsOfSpecialIngredient = this.getWeightPerIngredient(line);
@@ -250,10 +247,10 @@ export class RatioView extends ItemView {
 
     getRatioAmountOfLine(line: string, baseAmountInGrams: number): number {
         let gramAmountOfLine = this.getGramAmountOfLine(line);
-
         if (gramAmountOfLine && baseAmountInGrams) {
-            let ratioAmount = gramAmountOfLine / baseAmountInGrams * 100;
-            return this.roundToPlace(ratioAmount, 1);
+            let ratioAmount = (gramAmountOfLine / baseAmountInGrams) * 100;
+            let roundToXxPlace = this.plugin.settings.roundToPlace;
+            return this.roundToPlace(ratioAmount, roundToXxPlace);
         }
 
         return 0;
