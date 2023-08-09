@@ -28,9 +28,6 @@ export class RatioFile {
     async getRatioText(): Promise<string> {
         let text = await app.vault.cachedRead(this.file);
         let textSplitByHeaders = this.splitTextByHeaders(text);
-        // TODO new Ingredients(textSplitByHeaders);
-        // return Ingredients.getTextWithRatios();
-
         let ingredientText = this.getTextOfIngredients(textSplitByHeaders);
         let ingredients = new Ingredients(this.plugin, ingredientText);
         return ingredients.getTextWithRatios();
@@ -46,7 +43,6 @@ export class RatioFile {
         let ingredientChunkIndex = this.getIngredientsChunkIndex(textSplitByHeaders);
 
         let remainingText = textSplitByHeaders.slice(ingredientChunkIndex);
-
 
         let ingredientLevel = this.getLevelOfText(textSplitByHeaders[ingredientChunkIndex]);
 
