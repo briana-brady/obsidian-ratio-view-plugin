@@ -3,7 +3,7 @@
 	"name": "Ratio View",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This plugin shows baker's percentages for a file with ingredients in grams, given an ingredient to treat as a base",
+	"description": "This plugin shows baker's percentages for a file with ingredients in grams, given an ingredient to treat as a base.",
 	"author": "Briana Brady",
 	"authorUrl": "",
 	"fundingUrl": "",

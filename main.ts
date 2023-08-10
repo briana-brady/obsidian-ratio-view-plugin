@@ -131,7 +131,7 @@ class RatioViewSettingTab extends PluginSettingTab {
 				}));
 		new Setting(containerEl)
 			.setName("Add metric weight for an ingredient")
-			.addText(text => text
+			.addTextArea(text => text
 				.setValue(JSON.stringify(this.plugin.settings.ingredientsToGrams))
 				.onChange(async (value) => {
 					try {
