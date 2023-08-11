@@ -111,7 +111,7 @@ class RatioViewSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Base Amount Identifier')
-			.setDesc('What will identify a line containing the base amount for the recipe? Default is "flour" but it can be any character or word.')
+			.setDesc('What will identify a line containing the base amount for the recipe? Default is "flour".')
 			.addText(text => text
 				.setValue(this.plugin.settings.baseAmountIdentifier)
 				.onChange(async (value) => {

@@ -1,6 +1,96 @@
-# Obsidian Sample Plugin
+# Obsidian Ratio View Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+
+This plugin shows baker's percentages for a file with ingredients in grams, given an ingredient to treat as a base.
+Fun for those who really, *really* want to know just how much sugar to put in those cookies as a percentage of the flour content. Works great on bread recipes as well, but really you just need a Markdown file in Obsidian with an Ingredients heading to get going.
+
+## How to use
+
+Let's say we have a file, The-Best-Cookies.md with the following contents:
+
+```
+# The Best Cookies
+## Ingredients
+- 500g all-purpose flour
+- 200g butter
+- 2 eggs
+- 2 tsp vanilla
+- 300g granulated sugar
+- 2 tsp baking powder
+
+## Instructions
+Make the cookies.
+```
+(Possibly the worst cookies, I made the amounts up.)
+
+After installing the plugin, you'll see a percent icon on the left sidebar.
+Click it!
+
+The right sidebar will open a view that shows this!
+
+## Ingredients
+
+- 500g all-purpose flour 100%
+- 200g butter 40%
+- 2 eggs 20%
+- 2 tsp vanilla
+- 300g granulated sugar 60%
+- 2 tsp baking powder
+
+
+Plus the generated Ingredient list text gets copied to your clip board.
+
+But, you say! What about the baking powder?
+
+Well, Ratio View works on metric ingredients, but it allows for user input. If you go to settings, you'll see that you can add metric weights for ingredients! Look, there's some already for eggs!
+```js
+{"egg":50}
+```
+
+1 tsp of baking powder is ~ 4.8 grams, let's add it.
+```js
+{
+  "egg":50,
+  "tsp baking powder":4.8
+}
+```
+Let's recalculate!
+## Ingredients
+
+- 500g all-purpose flour 100%
+- 200g butter 40%
+- 2 eggs 20%
+- 2 tsp vanilla
+- 300g granulated sugar 60%
+- 2 tsp baking powder 1.9%
+
+Nice!
+
+For recipes that don't have flour in them, we can change or add to the Base Amount Identifier in settings.
+
+Changing the value to "flour|\\\*" means that in any recipe that doesn't have flour listed, the calculator will look for an asterisk (*) in the line that should be the base amount. 
+
+
+This is using a regex behind the scenes, so you'll probably need to escape any non alpha-numeric characters.
+
+  
+
+
+
+
+
+
+
+## Manually installing the plugin
+
+- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+
+
+
+
+
+## For development
+Forked from the sample plugin for Obsidian (https://obsidian.md).
 
 This project uses Typescript to provide type checking and documentation.
 The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
